@@ -1,41 +1,70 @@
 import random
 import time
 
+def get_admin_details():
+    """Captures deployment parameters."""
+    print("\n--- CONFIGURATION SETTINGS ---")
+    admin_name = input("Enter Admin Name: ").strip()
+    env = input("Enter Environment (Dev/Prod): ").strip().upper()
+    return admin_name, env
+
 def manual_approval():
-    """Task 2 & 3: Simulates the Jenkins 'Proceed' input step."""
-    print("--- SYSTEM INITIALIZED ---")
-    
+    """Simulates the Jenkins 'Proceed' input step."""
+    print("\n--- SYSTEM INITIALIZED ---")
     while True:
-        # Task 2: Add input step asking 'Proceed with Build?'
         user_input = input(">> Proceed with Game Launch? (yes/no): ").lower().strip()
-        
         if user_input == 'yes':
-            # Task 3: Print confirmation message after approval
-            print("\n[SUCCESS] Approval received. Loading Number Ranger...\)
-            time.sleep(1) # Adding a small delay for dramatic effect
             return True
         elif user_input == 'no':
-            print("\n[ABORTED] Game launch cancelled by user.")
             return False
         else:
             print("Invalid input. Please type 'yes' or 'no'.")
 
+def log_build_event(admin, env, result):
+    """New Function: Records the build outcome to a text file."""
+    with open("build_history.log", "a") as log_file:
+        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
+        log_entry = f"[{timestamp}] User: {admin} | Env: {env} | Result: {result}\n"
+        log_file.write(log_entry)
+    print(f"Log updated: {log_entry.strip()}")
+
+def show_history():
+    """New Function: Reads and displays previous build logs."""
+    print("\n--- RECENT BUILD HISTORY ---")
+    try:
+        with open("build_history.log", "r") as log_file:
+            lines = log_file.readlines()
+            for line in lines[-3:]: # Show only the last 3 entries
+                print(line.strip())
+    except FileNotFoundError:
+        print("No history found yet.")
+
 def play_game():
     secret_number = random.randint(1, 100)
-    print("\nGame is running! I'm thinking of a number between 1 and 100.")
-    guess = int(input("Quick guess to test the build: "))
-    
-    if guess == secret_number:
-        print("Legendary! You guessed it immediately.")
-    else:
-        print(f"Build test complete. The number was {secret_number}.")
+    try:
+        guess = int(input("\nGuess the secret number (1-100): "))
+        if guess == secret_number:
+            print("🎉 Success!")
+            return "SUCCESS"
+        else:
+            print(f"❌ Failed. Number was {secret_number}")
+            return "FAILURE"
+    except ValueError:
+        return "ERROR (Invalid Input)"
 
 if __name__ == "__main__":
-    # Task 1: (Simulated) Checkout code logic
-    print("Cloning repository: 'number-ranger-v5'...")
+    print("Fetching repository...")
     
-    # Run the Manual Approval function
     if manual_approval():
-        play_game()
+        name, environment = get_admin_details()
+        
+        # Run game and capture outcome
+        outcome = play_game()
+        
+        # Task: Record the event
+        log_build_event(name, environment, outcome)
+        
+        # Task: Show history
+        show_history()
     else:
-        print("Exiting...")
+        print("Build Aborted.")
