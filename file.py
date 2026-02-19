@@ -1,70 +1,74 @@
 import random
 import time
 
-def get_admin_details():
-    """Captures deployment parameters."""
-    print("\n--- CONFIGURATION SETTINGS ---")
-    admin_name = input("Enter Admin Name: ").strip()
-    env = input("Enter Environment (Dev/Prod): ").strip().upper()
-    return admin_name, env
+# --- PREVIOUS FUNCTIONS (get_admin_details, manual_approval, etc.) REMAIN THE SAME ---
 
-def manual_approval():
-    """Simulates the Jenkins 'Proceed' input step."""
-    print("\n--- SYSTEM INITIALIZED ---")
-    while True:
-        user_input = input(">> Proceed with Game Launch? (yes/no): ").lower().strip()
-        if user_input == 'yes':
-            return True
-        elif user_input == 'no':
-            return False
-        else:
-            print("Invalid input. Please type 'yes' or 'no'.")
+def apply_env_configs(env):
+    """New Function: Changes game settings based on the environment."""
+    print(f"\n[CONFIG] Applying settings for {env} environment...")
+    if env == "PROD":
+        # Production is harder!
+        print("!! SECURITY MODE ENABLED: Single attempt only !!")
+        return 1 
+    else:
+        # Dev gives you more slack
+        print("DEBUG MODE ENABLED: You get 3 attempts.")
+        return 3
 
-def log_build_event(admin, env, result):
-    """New Function: Records the build outcome to a text file."""
-    with open("build_history.log", "a") as log_file:
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
-        log_entry = f"[{timestamp}] User: {admin} | Env: {env} | Result: {result}\n"
-        log_file.write(log_entry)
-    print(f"Log updated: {log_entry.strip()}")
+def run_system_integrity_check():
+    """New Function: Simulates a Jenkins test suite or linting check."""
+    print("\n--- RUNNING SYSTEM INTEGRITY CHECKS ---")
+    checks = ["Disk Space", "Memory Allocation", "Source Code Linting", "Dependency Audit"]
+    
+    for check in checks:
+        print(f"Checking {check}...", end=" ", flush=True)
+        time.sleep(0.5)
+        print("[PASSED]")
+    
+    print("--- ALL CHECKS PASSED: BUILD STABLE ---")
+    return True
 
-def show_history():
-    """New Function: Reads and displays previous build logs."""
-    print("\n--- RECENT BUILD HISTORY ---")
-    try:
-        with open("build_history.log", "r") as log_file:
-            lines = log_file.readlines()
-            for line in lines[-3:]: # Show only the last 3 entries
-                print(line.strip())
-    except FileNotFoundError:
-        print("No history found yet.")
-
-def play_game():
+def play_game_with_lives(max_attempts):
+    """Updated Function: Now uses the environment-based lives."""
     secret_number = random.randint(1, 100)
-    try:
-        guess = int(input("\nGuess the secret number (1-100): "))
-        if guess == secret_number:
-            print("🎉 Success!")
-            return "SUCCESS"
-        else:
-            print(f"❌ Failed. Number was {secret_number}")
-            return "FAILURE"
-    except ValueError:
-        return "ERROR (Invalid Input)"
+    attempts = 0
+    
+    while attempts < max_attempts:
+        try:
+            guess = int(input(f"Attempt {attempts + 1}/{max_attempts} | Guess (1-100): "))
+            if guess == secret_number:
+                print("🎉 SUCCESS: Build Verified!")
+                return "SUCCESS"
+            elif guess < secret_number:
+                print("Higher!")
+            else:
+                print("Lower!")
+            attempts += 1
+        except ValueError:
+            print("Invalid input.")
+            
+    print(f"❌ FAILURE: Out of attempts. Number was {secret_number}")
+    return "FAILURE"
 
+# --- MAIN EXECUTION BLOCK ---
 if __name__ == "__main__":
     print("Fetching repository...")
     
     if manual_approval():
+        # Task 2: Parameter Input
         name, environment = get_admin_details()
         
-        # Run game and capture outcome
-        outcome = play_game()
-        
-        # Task: Record the event
-        log_build_event(name, environment, outcome)
-        
-        # Task: Show history
-        show_history()
+        # New Task: Integrity Testing
+        if run_system_integrity_check():
+            
+            # New Task: Dynamic Environment Config
+            lives = apply_env_configs(environment)
+            
+            # Execute
+            outcome = play_game_with_lives(lives)
+            
+            # Logging and History
+            log_build_event(name, environment, outcome)
+            show_history()
     else:
-        print("Build Aborted.")
+        print("Build Aborted by user.")
